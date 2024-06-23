@@ -1,18 +1,28 @@
 import React, { createContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const AppContext = createContext();
 
 export default function AppContextProvider({children}) {
     const [posts, setPosts] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(null);
+    const [totalPages, setTotalPages] = useState(1);
+    const navigate = useNavigate();
 
-    const fetchBlogPost = async(page = 1) => {
-        let url = `https://codehelp-apis.vercel.app/api/get-blogs?page=${page}`;
+    const fetchBlogPost = async(page = 1, tag = null, category) => {
+        setLoading(true);
+        const baseUrl = 'https://codehelp-apis.vercel.app/api/get-blogs';
+        let url = `${baseUrl}?page=${page}`;
+        if(tag){
+            url += `&tag=${tag}`;
+        }
+        if(category){
+            url += `&category=${category}`;
+        }
         try {
-            const result = await fetch(url);
-            const data = await result.json();
-            console.log(data);
+            const res = await fetch(url);
+            const data = await res.json();
             setPage(data.page);
             setPosts(data.posts);
             setTotalPages(data.totalPages);
@@ -22,16 +32,19 @@ export default function AppContextProvider({children}) {
             setPosts([]);
             setTotalPages(null);
         }
+        setLoading(false);
     }
     
     const handlePageChange = (page) => {
         setPage(page);
-        fetchBlogPost(page);
+        navigate( { search: `?page=${page}`});
     }
 
     const value = {
         posts,
         setPosts,
+        loading,
+        setLoading,
         page,
         setPage,
         totalPages,
